@@ -1,0 +1,3 @@
+Ez egy teszt dokumentum fordításhoz.
+Helló világ! Ez egy egyszerű teszt, amely célja annak ellenőrzése, hogy a fordítási folyamat helyesen működik-e az új n8n és LangChain integrációkkal.
+A dokumentum néhány alapvető szöveget tartalmaz, amelyeket angolról magyarra kell fordítani.

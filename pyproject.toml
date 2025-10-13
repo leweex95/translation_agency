@@ -1,0 +1,30 @@
+[tool.poetry.dependencies]
+python = "^3.11"
+textgenhub = {git = "https://github.com/leweex95/textgenhub.git"}
+python-docx = "^1.1.0"
+markdown = "^3.5.0"
+pyyaml = "^6.0.0"
+python-dotenv = "^1.0.0"
+PyPDF2 = "^3.0.0"
+openpyxl = "^3.1.0"
+n8n = "^0.1.0"
+langchain = "^0.1.0"
+langchain-openai = "^0.1.0"
+fastapi = "^0.104.0"
+uvicorn = "^0.24.0"
+
+[tool.poetry]
+name = "translation-agency"
+version = "0.1.0"
+description = "AI-powered modular translation pipeline with multi-step validation"
+authors = ["leweex95 <csibi.levente14@gmail.com>"]
+readme = "README.md"
+packages = [{include = "translation_agency", from = "src"}]
+
+[tool.poetry.scripts]
+translate = "translation_agency.main:main"
+api = "translation_agency.api:run_api"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

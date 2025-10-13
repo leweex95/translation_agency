@@ -1,0 +1,295 @@
+{
+  "name": "AI Translation Pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f1f46b4a-7b1a-4c7d-9e8e-123456789abc",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "manual-trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "input-doc",
+              "name": "input_document",
+              "value": "{{ $json.input_document }}",
+              "type": "string"
+            },
+            {
+              "id": "translation-style", 
+              "name": "translation_style",
+              "value": "{{ $json.translation_style || 'professional' }}",
+              "type": "string"
+            },
+            {
+              "id": "target-lang",
+              "name": "target_language", 
+              "value": "{{ $json.target_language || 'hungarian' }}",
+              "type": "string"
+            },
+            {
+              "id": "source-lang",
+              "name": "source_language",
+              "value": "{{ $json.source_language || 'auto' }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "b2f46b4a-7b1a-4c7d-9e8e-123456789bcd",
+      "name": "Parse Input Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "command": "python -m translation_agency.main {{ $json.input_document }} --style {{ $json.translation_style }} --target-language {{ $json.target_language }} --source-language {{ $json.source_language }} --output-dir output/n8n",
+        "workingDirectory": "/workspace"
+      },
+      "id": "c3f46b4a-7b1a-4c7d-9e8e-123456789cde",
+      "name": "Run Translation Pipeline",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "success",
+              "name": "pipeline_success",
+              "value": "{{ $json.exitCode === 0 }}",
+              "type": "boolean"
+            },
+            {
+              "id": "output",
+              "name": "pipeline_output",
+              "value": "{{ $json.stdout }}",
+              "type": "string"
+            },
+            {
+              "id": "error",
+              "name": "pipeline_error", 
+              "value": "{{ $json.stderr }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp",
+              "name": "completed_at",
+              "value": "{{ $now }}",
+              "type": "dateTime"
+            }
+          ]
+        }
+      },
+      "id": "d4f46b4a-7b1a-4c7d-9e8e-123456789def",
+      "name": "Process Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [840, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-condition",
+              "leftValue": "{{ $json.pipeline_success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "e5f46b4a-7b1a-4c7d-9e8e-123456789efg",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "success-msg",
+              "name": "message",
+              "value": "✅ Translation completed successfully!",
+              "type": "string"
+            },
+            {
+              "id": "output-path",
+              "name": "output_path",
+              "value": "output/n8n/final_translation_{{ $('Parse Input Parameters').item.json.input_document.split('/').pop() }}",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "f6f46b4a-7b1a-4c7d-9e8e-123456789fgh",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1240, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-msg",
+              "name": "message",
+              "value": "❌ Translation failed",
+              "type": "string"
+            },
+            {
+              "id": "error-details",
+              "name": "error_details",
+              "value": "{{ $('Process Results').item.json.pipeline_error }}",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "a7f46b4a-7b1a-4c7d-9e8e-123456789ghi",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1240, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "b8f46b4a-7b1a-4c7d-9e8e-123456789hij",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1440, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input Parameters": {
+      "main": [
+        [
+          {
+            "node": "Run Translation Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Translation Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Process Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Results": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response", 
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["translation", "ai", "pipeline"],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-13T00:00:00.000Z",
+  "versionId": "1"
+}
