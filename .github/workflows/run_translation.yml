@@ -8,7 +8,17 @@ on:
         required: true
         type: string
         default: 'docs/sample_doc.pdf'
-      
+
+      upload_file_content:
+        description: 'Base64 encoded file content (leave empty to use input_document path)'
+        required: false
+        type: string
+
+      upload_filename:
+        description: 'Filename for uploaded file (optional, auto-detected if empty)'
+        required: false
+        type: string
+
       translation_style:
         description: 'Translation style'
         required: false
@@ -20,13 +30,13 @@ on:
           - academic
           - creative
           - technical
-      
+
       target_language:
         description: 'Target language'
         required: false
         type: string
         default: 'hungarian'
-      
+
       disable_steps:
         description: 'Validation steps to disable (comma-separated: grammar,style,accuracy,hallucination,consistency,crossllm)'
         required: false
@@ -39,8 +49,54 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
-    
+      uses: actions/checkout@v4
+
+    - name: Handle file upload
+      id: handle-upload
+      if: inputs.upload_file_content != ''
+      run: |
+        echo "Processing uploaded file..."
+
+        # Determine filename
+        if [ -n "${{ inputs.upload_filename }}" ]; then
+          FILE_NAME="${{ inputs.upload_filename }}"
+        else
+          # Try to extract from input_document path
+          FILE_NAME=$(basename "${{ inputs.input_document }}" | cut -d'?' -f1)
+          if [ -z "$FILE_NAME" ] || [ "$FILE_NAME" = "${{ inputs.input_document }}" ]; then
+            FILE_NAME="uploaded_document.pdf"
+          fi
+        fi
+
+        echo "Saving uploaded file as: $FILE_NAME"
+
+        # Create temp directory
+        mkdir -p temp_input
+
+        # Decode base64 content and save file
+        echo "${{ inputs.upload_file_content }}" | base64 -d > "temp_input/$FILE_NAME"
+
+        # Verify file was created and get size
+        if [ ! -f "temp_input/$FILE_NAME" ]; then
+          echo "Error: Failed to decode and save uploaded file"
+          exit 1
+        fi
+
+        FILE_SIZE=$(stat -c%s "temp_input/$FILE_NAME")
+        echo "Uploaded file saved successfully: $FILE_SIZE bytes"
+        echo "input_file=temp_input/$FILE_NAME" >> $GITHUB_OUTPUT
+
+    - name: Set input file path
+      id: set-input
+      run: |
+        if [ -n "${{ steps.handle-upload.outputs.input_file }}" ]; then
+          # Use uploaded file
+          echo "input_file=${{ steps.handle-upload.outputs.input_file }}" >> $GITHUB_OUTPUT
+        else
+          # Use repository file
+          echo "input_file=${{ inputs.input_document }}" >> $GITHUB_OUTPUT
+        fi
+
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -53,11 +109,12 @@ jobs:
     
     - name: Validate input file
       run: |
-        if [ ! -f "${{ inputs.input_document }}" ]; then
-          echo "Error: Input file '${{ inputs.input_document }}' not found"
+        INPUT_FILE="${{ steps.set-input.outputs.input_file }}"
+        if [ ! -f "$INPUT_FILE" ]; then
+          echo "Error: Input file '$INPUT_FILE' not found"
           exit 1
         fi
-        echo "Input file found: ${{ inputs.input_document }}"
+        echo "Input file found: $INPUT_FILE"
     
     - name: Prepare output directory
       run: |
@@ -67,11 +124,12 @@ jobs:
     - name: Build CLI command
       id: build-command
       run: |
+        INPUT_FILE="${{ steps.set-input.outputs.input_file }}"
         CMD="poetry run python -m src.translation_agency.main"
-        CMD="$CMD '${{ inputs.input_document }}'"
+        CMD="$CMD '$INPUT_FILE'"
         CMD="$CMD --style '${{ inputs.translation_style }}'"
         CMD="$CMD --target-language '${{ inputs.target_language }}'"
-        
+
         # Add disabled steps if specified
         if [ -n "${{ inputs.disable_steps }}" ]; then
           IFS=',' read -ra STEPS <<< "${{ inputs.disable_steps }}"
@@ -79,7 +137,7 @@ jobs:
             CMD="$CMD --disable-steps '$step'"
           done
         fi
-        
+
         echo "command=$CMD" >> $GITHUB_OUTPUT
         echo "Command: $CMD"
     
