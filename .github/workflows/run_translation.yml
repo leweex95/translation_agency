@@ -53,17 +53,17 @@ jobs:
 
     - name: Handle file upload
       id: handle-upload
-      if: inputs.upload_file_content != ''
+      if: github.event.inputs.upload_file_content != ''
       run: |
         echo "Processing uploaded file..."
 
         # Determine filename
-        if [ -n "${{ inputs.upload_filename }}" ]; then
-          FILE_NAME="${{ inputs.upload_filename }}"
+        if [ -n "${{ github.event.inputs.upload_filename }}" ]; then
+          FILE_NAME="${{ github.event.inputs.upload_filename }}"
         else
           # Try to extract from input_document path
-          FILE_NAME=$(basename "${{ inputs.input_document }}" | cut -d'?' -f1)
-          if [ -z "$FILE_NAME" ] || [ "$FILE_NAME" = "${{ inputs.input_document }}" ]; then
+          FILE_NAME=$(basename "${{ github.event.inputs.input_document }}" | cut -d'?' -f1)
+          if [ -z "$FILE_NAME" ] || [ "$FILE_NAME" = "${{ github.event.inputs.input_document }}" ]; then
             FILE_NAME="uploaded_document.pdf"
           fi
         fi
@@ -74,7 +74,7 @@ jobs:
         mkdir -p temp_input
 
         # Decode base64 content and save file
-        echo "${{ inputs.upload_file_content }}" | base64 -d > "temp_input/$FILE_NAME"
+        echo "${{ github.event.inputs.upload_file_content }}" | base64 -d > "temp_input/$FILE_NAME"
 
         # Verify file was created and get size
         if [ ! -f "temp_input/$FILE_NAME" ]; then
@@ -127,12 +127,12 @@ jobs:
         INPUT_FILE="${{ steps.set-input.outputs.input_file }}"
         CMD="poetry run python -m src.translation_agency.main"
         CMD="$CMD '$INPUT_FILE'"
-        CMD="$CMD --style '${{ inputs.translation_style }}'"
-        CMD="$CMD --target-language '${{ inputs.target_language }}'"
+        CMD="$CMD --style '${{ github.event.inputs.translation_style }}'"
+        CMD="$CMD --target-language '${{ github.event.inputs.target_language }}'"
 
         # Add disabled steps if specified
-        if [ -n "${{ inputs.disable_steps }}" ]; then
-          IFS=',' read -ra STEPS <<< "${{ inputs.disable_steps }}"
+        if [ -n "${{ github.event.inputs.disable_steps }}" ]; then
+          IFS=',' read -ra STEPS <<< "${{ github.event.inputs.disable_steps }}"
           for step in "${STEPS[@]}"; do
             CMD="$CMD --disable-steps '$step'"
           done
@@ -220,9 +220,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Input Document | \`${{ inputs.input_document }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Translation Style | ${{ inputs.translation_style }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Target Language | ${{ inputs.target_language }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Input Document | \`${{ github.event.inputs.input_document }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target Language | ${{ github.event.inputs.target_language }} |" >> $GITHUB_STEP_SUMMARY
           
           if [ -n "${{ steps.output-info.outputs.output_file }}" ]; then
             echo "| Output File | \`${{ steps.output-info.outputs.output_file }}\` |" >> $GITHUB_STEP_SUMMARY
@@ -238,7 +238,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Input Document | \`${{ inputs.input_document }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Input Document | \`${{ github.event.inputs.input_document }}\` |" >> $GITHUB_STEP_SUMMARY
         fi
 
   push-artifacts:
@@ -284,7 +284,7 @@ jobs:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
         BRANCH=$(git rev-parse --abbrev-ref HEAD)
-        INPUT_FILE="${{ inputs.input_document }}"
+        INPUT_FILE="${{ github.event.inputs.input_document }}"
         BASENAME=$(basename "$INPUT_FILE" | cut -d. -f1)
         
         git add output/
