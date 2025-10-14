@@ -314,7 +314,12 @@ jobs:
         for ($i = 1; $i -le $RETRIES; $i++) {
           try {
             # Force push since we know our changes are the only ones that matter
-            $pushResult = git -c safe.directory="$PWD" push "https://x-access-token:$($env:PAT_TOKEN)@github.com/${{ github.repository }} HEAD:$BRANCH" --force-with-lease
+            $token = $env:PAT_TOKEN
+            Write-Host "Token length: $($token.Length)"
+            Write-Host "Token starts with: $($token.Substring(0, [Math]::Min(10, $token.Length)))"
+            $url = "https://x-access-token:$token@github.com/${{ github.repository }}"
+            Write-Host "Push URL: $url"
+            $pushResult = git -c safe.directory="$PWD" push "$url HEAD:$BRANCH" --force-with-lease
             if ($LASTEXITCODE -eq 0) {
               Write-Host "Successfully pushed translation results!"
               $SUCCESS = 1
