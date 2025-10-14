@@ -1,4 +1,9 @@
-name: AI translation pipeline (Self-hosted)
+# ⚠️ SECURITY WARNING: Never add 'pull_request' triggers to this workflow!
+# Self-hosted runners in public repos are vulnerable to malicious PRs from forks.
+# Only use 'workflow_dispatch' for manual control and restrict to specific actors.
+# See: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#considering-cross-repository-access
+
+name: AI translation pipeline
 
 on:
   workflow_dispatch:
@@ -35,6 +40,7 @@ on:
 
 jobs:
   translate:
+    if: github.actor == 'leweex95'
     runs-on: self-hosted
     
     steps:
@@ -57,10 +63,14 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Install dependencies
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
-        pip install -e .
+        pip install poetry
+    
+    - name: Install dependencies
+      run: |
+        poetry install
     
     - name: Prepare output directory
       run: |

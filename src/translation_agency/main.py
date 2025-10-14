@@ -18,7 +18,7 @@ def create_cli_parser() -> argparse.ArgumentParser:
     
     parser.add_argument(
         "input_document",
-        help="Path to the document to translate (.txt, .md, .docx)"
+        help="Path to the document to translate (.txt, .md, .docx, .pdf)"
     )
     
     parser.add_argument(
@@ -49,8 +49,9 @@ def create_cli_parser() -> argparse.ArgumentParser:
     
     parser.add_argument(
         "--headless",
-        action="store_false",
-        help="Show browser window (default: headless mode)"
+        type=lambda x: str(x).lower() in ['true', '1', 'yes', 'on'],
+        default=True,
+        help="Run browser in headless mode (default: true). Use --headless false to show browser."
     )
     
     parser.add_argument(

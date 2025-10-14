@@ -1,0 +1,20 @@
+name: Workflow Security Check
+
+on:
+  push:
+    paths: [ '.github/workflows/**' ]
+  pull_request:
+    paths: [ '.github/workflows/**' ]
+
+jobs:
+  validate-workflows:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Validate workflow security
+      run: |
+        chmod +x scripts/validate-workflow-security.sh
+        ./scripts/validate-workflow-security.sh
