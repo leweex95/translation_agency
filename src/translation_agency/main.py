@@ -122,12 +122,12 @@ def main():
     results = pipeline.run_pipeline()
     
     if results["success"]:
-        print(f"✅ Translation completed successfully!")
-        print(f"📄 Input: {results['input_path']}")
-        print(f"📁 Output: {results['output_path']}")
-        print(f"🔧 Steps completed: {results['steps_completed']}")
+        print(f"[SUCCESS] Translation completed successfully!")
+        print(f"[INPUT] {results['input_path']}")
+        print(f"[OUTPUT] {results['output_path']}")
+        print(f"[STEPS] {results['steps_completed']}")
     else:
-        print(f"❌ Translation failed: {results['error']}")
+        print(f"[ERROR] Translation failed: {results['error']}")
         sys.exit(1)
 
 

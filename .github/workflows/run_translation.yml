@@ -1,4 +1,4 @@
-# ⚠️ SECURITY WARNING: Never add 'pull_request' triggers to this workflow!
+# [SECURITY WARNING] Never add 'pull_request' triggers to this workflow!
 # Self-hosted runners in public repos are vulnerable to malicious PRs from forks.
 # Only use 'workflow_dispatch' for manual control and restrict to specific actors.
 # See: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#considering-cross-repository-access

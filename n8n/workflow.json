@@ -130,7 +130,7 @@
             {
               "id": "success-msg",
               "name": "message",
-              "value": "✅ Translation completed successfully!",
+              "value": "[SUCCESS] Translation completed successfully!",
               "type": "string"
             },
             {
@@ -161,7 +161,7 @@
             {
               "id": "error-msg",
               "name": "message",
-              "value": "❌ Translation failed",
+              "value": "[ERROR] Translation failed",
               "type": "string"
             },
             {

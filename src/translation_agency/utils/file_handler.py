@@ -91,8 +91,8 @@ class DocumentHandler:
             return path.read_text(encoding='utf-8')
         except UnicodeDecodeError as e:
             # If UTF-8 decoding fails, show the file content for debugging
-            print(f"❌ UTF-8 decoding failed for file: {path}")
-            print("📄 File content (first 500 bytes):")
+            print(f"[ERROR] UTF-8 decoding failed for file: {path}")
+            print("[CONTENT] File content (first 500 bytes):")
             try:
                 with open(path, 'rb') as f:
                     content = f.read(500)
@@ -100,7 +100,7 @@ class DocumentHandler:
                     if len(content) == 500:
                         print("... (truncated)")
             except Exception as read_error:
-                print(f"❌ Could not read file content: {read_error}")
+                print(f"[ERROR] Could not read file content: {read_error}")
             raise ValueError(f"File {path} is not valid UTF-8 text. This appears to be a binary file or uses a different encoding. Supported formats: {DocumentHandler.SUPPORTED_FORMATS}") from e
     
     @staticmethod
@@ -110,8 +110,8 @@ class DocumentHandler:
             return path.read_text(encoding='utf-8')
         except UnicodeDecodeError as e:
             # If UTF-8 decoding fails, show the file content for debugging
-            print(f"❌ UTF-8 decoding failed for file: {path}")
-            print("📄 File content (first 500 bytes):")
+            print(f"[ERROR] UTF-8 decoding failed for file: {path}")
+            print("[CONTENT] File content (first 500 bytes):")
             try:
                 with open(path, 'rb') as f:
                     content = f.read(500)
@@ -119,7 +119,7 @@ class DocumentHandler:
                     if len(content) == 500:
                         print("... (truncated)")
             except Exception as read_error:
-                print(f"❌ Could not read file content: {read_error}")
+                print(f"[ERROR] Could not read file content: {read_error}")
             raise ValueError(f"File {path} is not valid UTF-8 text. This appears to be a binary file or uses a different encoding. Supported formats: {DocumentHandler.SUPPORTED_FORMATS}") from e
     
     @staticmethod
