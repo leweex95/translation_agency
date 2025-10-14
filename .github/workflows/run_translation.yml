@@ -49,7 +49,7 @@ jobs:
 
     - name: Validate local file
       id: validate-file
-      shell: pwsh
+      shell: powershell
       run: |
         $INPUT_FILE = "${{ github.event.inputs.local_file_path }}"
         if (-not (Test-Path $INPUT_FILE)) {
@@ -65,25 +65,25 @@ jobs:
         python-version: '3.11'
     
     - name: Install Poetry
-      shell: pwsh
+      shell: powershell
       run: |
         python -m pip install --upgrade pip
         pip install poetry
     
     - name: Install dependencies
-      shell: pwsh
+      shell: powershell
       run: |
         poetry install
     
     - name: Prepare output directory
-      shell: pwsh
+      shell: powershell
       run: |
         New-Item -ItemType Directory -Force -Path "output/github-actions" | Out-Null
         Write-Host "Output directory created: output/github-actions"
     
     - name: Build CLI command
       id: build-command
-      shell: pwsh
+      shell: powershell
       run: |
         $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
         $CMD = "poetry run python -m src.translation_agency.main"
@@ -104,7 +104,7 @@ jobs:
     
     - name: Run translation pipeline
       id: translate
-      shell: pwsh
+      shell: powershell
       run: |
         Write-Host "Starting translation pipeline..."
         
@@ -128,7 +128,7 @@ jobs:
     
     - name: List output files
       if: always()
-      shell: pwsh
+      shell: powershell
       run: |
         Write-Host "Generated files:"
         if (Test-Path "output/github-actions") {
@@ -140,7 +140,7 @@ jobs:
     - name: Get output file info
       id: output-info
       if: steps.translate.outputs.success == 'true'
-      shell: pwsh
+      shell: powershell
       run: |
         $INPUT_FILE = "${{ github.event.inputs.local_file_path }}"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
@@ -183,7 +183,7 @@ jobs:
     
     - name: Create job summary
       if: always()
-      shell: pwsh
+      shell: powershell
       run: |
         "# AI Translation Pipeline Results" >> $env:GITHUB_STEP_SUMMARY
         "" >> $env:GITHUB_STEP_SUMMARY
@@ -239,7 +239,7 @@ jobs:
 
     - name: Check for changes
       id: check_changes
-      shell: pwsh
+      shell: powershell
       run: |
         Write-Host "Checking for changes in output directory..."
         if (-not (git diff --quiet -- "output/")) {
@@ -254,7 +254,7 @@ jobs:
 
     - name: Commit and push translation results
       if: steps.check_changes.outputs.changes_detected == 'true'
-      shell: pwsh
+      shell: powershell
       env:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
