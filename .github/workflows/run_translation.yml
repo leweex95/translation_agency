@@ -284,14 +284,16 @@ jobs:
       shell: powershell
       run: |
         Write-Host "Checking for changes in output directory..."
-        if (-not (git diff --quiet -- "output/")) {
-          echo "changes_detected=true" >> $env:GITHUB_OUTPUT
-          Write-Host "New translation outputs detected"
-          git add output/
-          git status
-        } else {
+        # Use -c to temporarily set safe.directory for this command only
+        $hasChanges = git -c safe.directory="$PWD" diff --quiet -- "output/"
+        if ($LASTEXITCODE -eq 0) {
           echo "changes_detected=false" >> $env:GITHUB_OUTPUT
           Write-Host "No new translation outputs to commit"
+        } else {
+          echo "changes_detected=true" >> $env:GITHUB_OUTPUT
+          Write-Host "New translation outputs detected"
+          git -c safe.directory="$PWD" add output/
+          git -c safe.directory="$PWD" status
         }
 
     - name: Commit and push translation results
@@ -310,9 +312,9 @@ jobs:
         $RETRIES = 10
         $SUCCESS = 0
         for ($i = 1; $i -le $RETRIES; $i++) {
-          git fetch origin "$BRANCH"
-          git pull --rebase origin "$BRANCH" 2>$null; if ($LASTEXITCODE -ne 0) { git merge origin/"$BRANCH" }
-          $pushResult = git push "https://x-access-token:$env:PAT_TOKEN@github.com/${{ github.repository }} HEAD:$BRANCH"
+          git -c safe.directory="$PWD" fetch origin "$BRANCH"
+          git -c safe.directory="$PWD" pull --rebase origin "$BRANCH" 2>$null; if ($LASTEXITCODE -ne 0) { git -c safe.directory="$PWD" merge origin/"$BRANCH" }
+          $pushResult = git -c safe.directory="$PWD" push "https://x-access-token:$env:PAT_TOKEN@github.com/${{ github.repository }} HEAD:$BRANCH"
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Successfully pushed translation results!"
             $SUCCESS = 1
