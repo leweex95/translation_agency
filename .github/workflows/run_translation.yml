@@ -218,9 +218,9 @@ jobs:
       with:
         name: intermediate-results-${{ github.run_id }}
         path: |
-          output/github-actions/step*.txt
-          output/github-actions/step*.md
-          output/github-actions/step*.docx
+          output/github-actions/**/step*.txt
+          output/github-actions/**/step*.md
+          output/github-actions/**/step*.docx
         retention-days: 7
     
     - name: Create job summary
