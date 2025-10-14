@@ -12,7 +12,7 @@ on:
         description: 'Absolute path to the document to translate on your local machine'
         required: true
         type: string
-        default: 'C:\Users\csibi\Desktop\document.pdf'
+        default: 'C:\Users\csibi\Desktop\sample_doc.pdf'
 
       translation_style:
         description: 'Translation style'
@@ -178,27 +178,46 @@ jobs:
       run: |
         $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
+        $DISABLED_STEPS = "${{ github.event.inputs.disable_steps }}"
         
-        # The final output is the last validation step file: step7_crossllm_validation.txt
-        # Located in: output/github-actions/{BASENAME}/step7_crossllm_validation.txt
-        $OUTPUT_FILE = "output/github-actions/$BASENAME/step7_crossllm_validation.txt"
+        # Determine the final validation step based on disabled steps
+        $all_steps = @("grammar", "style", "accuracy", "hallucination", "consistency", "crossllm")
+        $enabled_steps = $all_steps | Where-Object { $DISABLED_STEPS -notlike "*$_*" }
         
-        if (Test-Path $OUTPUT_FILE) {
-          echo "output_file=$OUTPUT_FILE" >> $env:GITHUB_OUTPUT
-          Write-Host "Final translation: $OUTPUT_FILE"
-          
-          # Get file size
-          $SIZE = (Get-Item $OUTPUT_FILE).Length
-          echo "file_size=$SIZE" >> $env:GITHUB_OUTPUT
-        } else {
-          Write-Host "Expected output file not found: $OUTPUT_FILE"
-          # List what files are actually in the output directory for debugging
-          Write-Host "Files in output directory:"
-          if (Test-Path "output/github-actions") {
-            Get-ChildItem "output/github-actions" -Recurse | ForEach-Object { $_.FullName }
-          }
-          exit 1
+        # Find the highest step number that should exist
+        $step_number = 1  # initial translation is step 1
+        foreach ($step in $enabled_steps) {
+          $step_number++
         }
+        
+        $OUTPUT_FILE = "output/github-actions/$BASENAME/step$($step_number)_$($enabled_steps[-1])_validation.txt"
+        
+        # If the expected file doesn't exist, try to find any validation file
+        if (-not (Test-Path $OUTPUT_FILE)) {
+          Write-Host "Expected output file not found: $OUTPUT_FILE"
+          Write-Host "Looking for any available validation files..."
+          
+          $validation_files = Get-ChildItem "output/github-actions/$BASENAME" -Filter "step*_validation.txt" | 
+            Sort-Object { [int]($_.Name -replace 'step(\d+).*', '$1') } -Descending
+          
+          if ($validation_files.Count -gt 0) {
+            $OUTPUT_FILE = $validation_files[0].FullName
+            Write-Host "Using latest available validation file: $OUTPUT_FILE"
+          } else {
+            Write-Host "No validation files found in output directory"
+            if (Test-Path "output/github-actions") {
+              Get-ChildItem "output/github-actions" -Recurse | ForEach-Object { $_.FullName }
+            }
+            exit 1
+          }
+        }
+        
+        echo "output_file=$OUTPUT_FILE" >> $env:GITHUB_OUTPUT
+        Write-Host "Final translation: $OUTPUT_FILE"
+        
+        # Get file size
+        $SIZE = (Get-Item $OUTPUT_FILE).Length
+        echo "file_size=$SIZE" >> $env:GITHUB_OUTPUT
     
     - name: Upload translation results
       if: steps.translate.outputs.success == 'true'
@@ -238,6 +257,7 @@ jobs:
           "| Input Document | `${{ github.event.inputs.local_file_path }}` |" >> $env:GITHUB_STEP_SUMMARY
           "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $env:GITHUB_STEP_SUMMARY
           "| Target Language | ${{ github.event.inputs.target_language }} |" >> $env:GITHUB_STEP_SUMMARY
+          "| Disabled Steps | ${{ github.event.inputs.disable_steps || 'None' }} |" >> $env:GITHUB_STEP_SUMMARY
           
           if ("${{ steps.output-info.outputs.output_file }}" -ne "") {
             "| Output File | `${{ steps.output-info.outputs.output_file }}` |" >> $env:GITHUB_STEP_SUMMARY
@@ -254,6 +274,9 @@ jobs:
           "| Parameter | Value |" >> $env:GITHUB_STEP_SUMMARY
           "|-----------|-------|" >> $env:GITHUB_STEP_SUMMARY
           "| Input Document | `${{ github.event.inputs.local_file_path }}` |" >> $env:GITHUB_STEP_SUMMARY
+          "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $env:GITHUB_STEP_SUMMARY
+          "| Target Language | ${{ github.event.inputs.target_language }} |" >> $env:GITHUB_STEP_SUMMARY
+          "| Disabled Steps | ${{ github.event.inputs.disable_steps || 'None' }} |" >> $env:GITHUB_STEP_SUMMARY
         }
 
   push-artifacts:
