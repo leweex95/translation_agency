@@ -80,6 +80,10 @@ def create_cli_parser() -> argparse.ArgumentParser:
 
 def main():
     """Main entry point for CLI."""
+    # Set UTF-8 encoding for stdout to handle international characters
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    
     parser = create_cli_parser()
     args = parser.parse_args()
     
@@ -127,7 +131,13 @@ def main():
         print(f"[OUTPUT] {results['output_path']}")
         print(f"[STEPS] {results['steps_completed']}")
     else:
-        print(f"[ERROR] Translation failed: {results['error']}")
+        # Handle encoding issues on Windows console
+        error_msg = f"[ERROR] Translation failed: {results['error']}"
+        try:
+            print(error_msg)
+        except UnicodeEncodeError:
+            # Fallback: encode to UTF-8 and write bytes directly
+            print(error_msg.encode('utf-8', errors='replace').decode('utf-8'))
         sys.exit(1)
 
 

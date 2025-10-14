@@ -96,7 +96,11 @@ class DocumentHandler:
             try:
                 with open(path, 'rb') as f:
                     content = f.read(500)
-                    print(content)
+                    # Safely print binary content
+                    try:
+                        print(content.decode('utf-8', errors='replace'))
+                    except UnicodeEncodeError:
+                        print(f"[BINARY] Binary content detected ({len(content)} bytes)")
                     if len(content) == 500:
                         print("... (truncated)")
             except Exception as read_error:
@@ -115,7 +119,11 @@ class DocumentHandler:
             try:
                 with open(path, 'rb') as f:
                     content = f.read(500)
-                    print(content)
+                    # Safely print binary content
+                    try:
+                        print(content.decode('utf-8', errors='replace'))
+                    except UnicodeEncodeError:
+                        print(f"[BINARY] Binary content detected ({len(content)} bytes)")
                     if len(content) == 500:
                         print("... (truncated)")
             except Exception as read_error:
