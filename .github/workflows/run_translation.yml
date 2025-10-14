@@ -123,6 +123,7 @@ jobs:
         $CMD = "$CMD '$INPUT_FILE'"
         $CMD = "$CMD --style '${{ github.event.inputs.translation_style }}'"
         $CMD = "$CMD --target-language '${{ github.event.inputs.target_language }}'"
+        $CMD = "$CMD --output-dir 'output/github-actions'"
 
         # Add disabled steps if specified
         if ("${{ github.event.inputs.disable_steps }}" -ne "") {
