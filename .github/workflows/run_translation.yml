@@ -1,23 +1,13 @@
-name: AI translation pipeline
+name: AI translation pipeline (Self-hosted)
 
 on:
   workflow_dispatch:
     inputs:
-      input_document:
-        description: 'Path to the document to translate (relative to repository root)'
+      local_file_path:
+        description: 'Absolute path to the document to translate on your local machine'
         required: true
         type: string
-        default: 'docs/sample_doc.pdf'
-
-      upload_file_content:
-        description: 'Base64 encoded file content (leave empty to use input_document path)'
-        required: false
-        type: string
-
-      upload_filename:
-        description: 'Filename for uploaded file (optional, auto-detected if empty)'
-        required: false
-        type: string
+        default: 'C:\Users\csibi\Desktop\document.pdf'
 
       translation_style:
         description: 'Translation style'
@@ -45,57 +35,22 @@ on:
 
 jobs:
   translate:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Handle file upload
-      id: handle-upload
-      if: github.event.inputs.upload_file_content != ''
+    - name: Validate local file
+      id: validate-file
       run: |
-        echo "Processing uploaded file..."
-
-        # Determine filename
-        if [ -n "${{ github.event.inputs.upload_filename }}" ]; then
-          FILE_NAME="${{ github.event.inputs.upload_filename }}"
-        else
-          # Try to extract from input_document path
-          FILE_NAME=$(basename "${{ github.event.inputs.input_document }}" | cut -d'?' -f1)
-          if [ -z "$FILE_NAME" ] || [ "$FILE_NAME" = "${{ github.event.inputs.input_document }}" ]; then
-            FILE_NAME="uploaded_document.pdf"
-          fi
-        fi
-
-        echo "Saving uploaded file as: $FILE_NAME"
-
-        # Create temp directory
-        mkdir -p temp_input
-
-        # Decode base64 content and save file
-        echo "${{ github.event.inputs.upload_file_content }}" | base64 -d > "temp_input/$FILE_NAME"
-
-        # Verify file was created and get size
-        if [ ! -f "temp_input/$FILE_NAME" ]; then
-          echo "Error: Failed to decode and save uploaded file"
+        INPUT_FILE="${{ github.event.inputs.local_file_path }}"
+        if [ ! -f "$INPUT_FILE" ]; then
+          echo "Error: Local file '$INPUT_FILE' not found"
           exit 1
         fi
-
-        FILE_SIZE=$(stat -c%s "temp_input/$FILE_NAME")
-        echo "Uploaded file saved successfully: $FILE_SIZE bytes"
-        echo "input_file=temp_input/$FILE_NAME" >> $GITHUB_OUTPUT
-
-    - name: Set input file path
-      id: set-input
-      run: |
-        if [ -n "${{ steps.handle-upload.outputs.input_file }}" ]; then
-          # Use uploaded file
-          echo "input_file=${{ steps.handle-upload.outputs.input_file }}" >> $GITHUB_OUTPUT
-        else
-          # Use repository file
-          echo "input_file=${{ inputs.input_document }}" >> $GITHUB_OUTPUT
-        fi
+        echo "Local file found: $INPUT_FILE"
+        echo "input_file=$INPUT_FILE" >> $GITHUB_OUTPUT
 
     - name: Set up Python
       uses: actions/setup-python@v6
@@ -107,15 +62,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
     
-    - name: Validate input file
-      run: |
-        INPUT_FILE="${{ steps.set-input.outputs.input_file }}"
-        if [ ! -f "$INPUT_FILE" ]; then
-          echo "Error: Input file '$INPUT_FILE' not found"
-          exit 1
-        fi
-        echo "Input file found: $INPUT_FILE"
-    
     - name: Prepare output directory
       run: |
         mkdir -p output/github-actions
@@ -124,7 +70,7 @@ jobs:
     - name: Build CLI command
       id: build-command
       run: |
-        INPUT_FILE="${{ steps.set-input.outputs.input_file }}"
+        INPUT_FILE="${{ steps.validate-file.outputs.input_file }}"
         CMD="poetry run python -m src.translation_agency.main"
         CMD="$CMD '$INPUT_FILE'"
         CMD="$CMD --style '${{ github.event.inputs.translation_style }}'"
@@ -170,7 +116,7 @@ jobs:
       id: output-info
       if: steps.translate.outputs.success == 'true'
       run: |
-        INPUT_FILE="${{ inputs.input_document }}"
+        INPUT_FILE="${{ github.event.inputs.local_file_path }}"
         BASENAME=$(basename "$INPUT_FILE")
         OUTPUT_FILE="output/github-actions/final_translation_$BASENAME"
         
@@ -220,7 +166,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Input Document | \`${{ github.event.inputs.input_document }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Input Document | \`${{ github.event.inputs.local_file_path }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Target Language | ${{ github.event.inputs.target_language }} |" >> $GITHUB_STEP_SUMMARY
           
@@ -238,13 +184,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Input Document | \`${{ github.event.inputs.input_document }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Input Document | \`${{ github.event.inputs.local_file_path }}\` |" >> $GITHUB_STEP_SUMMARY
         fi
 
   push-artifacts:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: translate
-    if: needs.translate.outputs.success == 'true'
+    if: needs.translate.result == 'success'
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
@@ -284,7 +230,7 @@ jobs:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
         BRANCH=$(git rev-parse --abbrev-ref HEAD)
-        INPUT_FILE="${{ github.event.inputs.input_document }}"
+        INPUT_FILE="${{ github.event.inputs.local_file_path }}"
         BASENAME=$(basename "$INPUT_FILE" | cut -d. -f1)
         
         git add output/
