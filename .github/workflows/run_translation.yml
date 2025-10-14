@@ -45,7 +45,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Validate local file
       id: validate-file
@@ -285,7 +285,7 @@ jobs:
     if: needs.translate.result == 'success'
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         token: ${{ secrets.PAT_TOKEN }}
         fetch-depth: 0
