@@ -302,12 +302,12 @@ jobs:
       env:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
-        $BRANCH = git rev-parse --abbrev-ref HEAD
+        $BRANCH = git -c safe.directory="$PWD" rev-parse --abbrev-ref HEAD
         $INPUT_FILE = "${{ github.event.inputs.local_file_path }}"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
         
-        git add output/
-        git commit -m "[Auto-commit] Translation results: $BASENAME [skip ci]"
+        git -c safe.directory="$PWD" add output/
+        git -c safe.directory="$PWD" commit -m "[Auto-commit] Translation results: $BASENAME [skip ci]"
         
         $RETRIES = 10
         $SUCCESS = 0
