@@ -59,6 +59,39 @@ jobs:
         Write-Host "Local file found: $INPUT_FILE"
         echo "input_file=$INPUT_FILE" >> $env:GITHUB_OUTPUT
 
+    - name: Debug runner permissions
+      shell: powershell
+      run: |
+        Write-Host "=== RUNNER PERMISSIONS DEBUG ==="
+        Write-Host "Current User: $env:USERNAME"
+        Write-Host "User Domain: $env:USERDOMAIN"
+        Write-Host "Computer Name: $env:COMPUTERNAME"
+        
+        $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
+        Write-Host "Input File: $INPUT_FILE"
+        
+        try {
+          $fileInfo = Get-Item $INPUT_FILE -ErrorAction Stop
+          Write-Host "File exists: Yes"
+          Write-Host "File size: $($fileInfo.Length) bytes"
+          Write-Host "Last modified: $($fileInfo.LastWriteTime)"
+          Write-Host "File permissions: OK (can access file)"
+        } catch {
+          Write-Host "File access error: $($_.Exception.Message)"
+        }
+        
+        # Test Desktop folder access
+        $desktopPath = "$env:USERPROFILE\Desktop"
+        Write-Host "Desktop path: $desktopPath"
+        try {
+          $desktopItems = Get-ChildItem $desktopPath -ErrorAction Stop | Measure-Object
+          Write-Host "Desktop access: OK (found $($desktopItems.Count) items)"
+        } catch {
+          Write-Host "Desktop access error: $($_.Exception.Message)"
+        }
+        
+        Write-Host "=== END DEBUG ==="
+
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
