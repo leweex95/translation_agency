@@ -82,7 +82,7 @@ jobs:
         $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
         $TIMESTAMP = Get-Date -Format "yyyyMMdd_HHmmss"
-        $OUTPUT_DIR = "output/$TIMESTAMP`_$BASENAME"
+        $OUTPUT_DIR = "output/$TIMESTAMP_$BASENAME"
         New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
         Write-Host "Output directory created: $OUTPUT_DIR"
         echo "output_dir=$OUTPUT_DIR" >> $env:GITHUB_OUTPUT
