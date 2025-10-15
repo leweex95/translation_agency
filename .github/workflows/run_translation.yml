@@ -80,13 +80,14 @@ jobs:
       shell: powershell
       run: |
         $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
+        Write-Host "DEBUG: INPUT_FILE = $INPUT_FILE"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
-        $TIMESTAMP = Get-Date -Format "yyyyMMdd_HHmmss"
+        $TIMESTAMP = [DateTime]::Now.ToString("yyyyMMdd_HHmmss")
         $OUTPUT_DIR = "output/" + $TIMESTAMP + "_" + $BASENAME
         Write-Host "DEBUG: TIMESTAMP = $TIMESTAMP"
         Write-Host "DEBUG: BASENAME = $BASENAME"
         Write-Host "DEBUG: OUTPUT_DIR = $OUTPUT_DIR"
-        New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
+        New-Item -ItemType Directory -Force -Path $OUTPUT_DIR
         Write-Host "Output directory created: $OUTPUT_DIR"
         echo "output_dir=$OUTPUT_DIR" >> $env:GITHUB_OUTPUT
         echo "basename=$BASENAME" >> $env:GITHUB_OUTPUT
