@@ -59,39 +59,6 @@ jobs:
         Write-Host "Local file found: $INPUT_FILE"
         echo "input_file=$INPUT_FILE" >> $env:GITHUB_OUTPUT
 
-    - name: Debug runner permissions
-      shell: powershell
-      run: |
-        Write-Host "=== RUNNER PERMISSIONS DEBUG ==="
-        Write-Host "Current User: $env:USERNAME"
-        Write-Host "User Domain: $env:USERDOMAIN"
-        Write-Host "Computer Name: $env:COMPUTERNAME"
-        
-        $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
-        Write-Host "Input File: $INPUT_FILE"
-        
-        try {
-          $fileInfo = Get-Item $INPUT_FILE -ErrorAction Stop
-          Write-Host "File exists: Yes"
-          Write-Host "File size: $($fileInfo.Length) bytes"
-          Write-Host "Last modified: $($fileInfo.LastWriteTime)"
-          Write-Host "File permissions: OK (can access file)"
-        } catch {
-          Write-Host "File access error: $($_.Exception.Message)"
-        }
-        
-        # Test Desktop folder access
-        $desktopPath = "$env:USERPROFILE\Desktop"
-        Write-Host "Desktop path: $desktopPath"
-        try {
-          $desktopItems = Get-ChildItem $desktopPath -ErrorAction Stop | Measure-Object
-          Write-Host "Desktop access: OK (found $($desktopItems.Count) items)"
-        } catch {
-          Write-Host "Desktop access error: $($_.Exception.Message)"
-        }
-        
-        Write-Host "=== END DEBUG ==="
-
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -108,31 +75,32 @@ jobs:
       run: |
         poetry install
     
-    - name: Prepare output directory
-      shell: powershell
-      run: |
-        New-Item -ItemType Directory -Force -Path "output/github-actions" | Out-Null
-        Write-Host "Output directory created: output/github-actions"
-    
-    - name: Build CLI command
-      id: build-command
+    - name: Prepare environment and build command
+      id: prepare-env
       shell: powershell
       run: |
         $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
+        $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
+        $TIMESTAMP = Get-Date -Format "yyyyMMdd_HHmmss"
+        $OUTPUT_DIR = "output/$TIMESTAMP`_$BASENAME"
+        New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
+        Write-Host "Output directory created: $OUTPUT_DIR"
+        echo "output_dir=$OUTPUT_DIR" >> $env:GITHUB_OUTPUT
+        echo "basename=$BASENAME" >> $env:GITHUB_OUTPUT
+        
         $CMD = "poetry run python -m src.translation_agency.main"
         $CMD = "$CMD '$INPUT_FILE'"
         $CMD = "$CMD --style '${{ github.event.inputs.translation_style }}'"
         $CMD = "$CMD --target-language '${{ github.event.inputs.target_language }}'"
-        $CMD = "$CMD --output-dir 'output/github-actions'"
+        $CMD = "$CMD --output-dir '$OUTPUT_DIR'"
 
-        # Add disabled steps if specified
-          if ("${{ github.event.inputs.disable_steps }}" -ne "") {
-            $DISABLED_STEPS = "${{ github.event.inputs.disable_steps }}"
-            Write-Host "Raw disable_steps input: '$DISABLED_STEPS'"
-            $STEPS = $DISABLED_STEPS -split "," | ForEach-Object { $_.Trim() }
-            Write-Host "Parsed steps: $($STEPS -join ', ')"
-            $CMD = "$CMD --disable-steps $($STEPS -join ' ')"
-          }
+        if ("${{ github.event.inputs.disable_steps }}" -ne "") {
+          $DISABLED_STEPS = "${{ github.event.inputs.disable_steps }}"
+          Write-Host "Raw disable_steps input: '$DISABLED_STEPS'"
+          $STEPS = $DISABLED_STEPS -split "," | ForEach-Object { $_.Trim() }
+          Write-Host "Parsed steps: $($STEPS -join ', ')"
+          $CMD = "$CMD --disable-steps $($STEPS -join ' ')"
+        }
 
         Write-Host "Command: $CMD"
         echo "command=$CMD" >> $env:GITHUB_OUTPUT
@@ -144,7 +112,7 @@ jobs:
         Write-Host "Starting translation pipeline..."
         
         # Run the pipeline
-        $command = "${{ steps.build-command.outputs.command }}"
+        $command = "${{ steps.prepare-env.outputs.command }}"
         try {
           Invoke-Expression $command
           if ($LASTEXITCODE -eq 0) {
@@ -161,24 +129,13 @@ jobs:
           exit 1
         }
     
-    - name: List output files
-      if: always()
-      shell: powershell
-      run: |
-        Write-Host "Generated files:"
-        if (Test-Path "output/github-actions") {
-          Get-ChildItem "output/github-actions" -File | Where-Object { $_.Name -like "*.txt" -or $_.Name -like "*.md" -or $_.Name -like "*.docx" } | Sort-Object Name | ForEach-Object { $_.Name }
-        } else {
-          Write-Host "No output directory found"
-        }
-    
     - name: Get output file info
       id: output-info
       if: steps.translate.outputs.success == 'true'
       shell: powershell
       run: |
         $INPUT_FILE = "${{ steps.validate-file.outputs.input_file }}"
-        $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
+        $BASENAME = "${{ steps.prepare-env.outputs.basename }}"
         $DISABLED_STEPS = "${{ github.event.inputs.disable_steps }}"
         
         # Determine the final validation step based on disabled steps
@@ -194,10 +151,10 @@ jobs:
         $step_number = 1  # initial translation is step 1
         if ($enabled_steps.Count -gt 0) {
           $step_number += $enabled_steps.Count
-          $OUTPUT_FILE = "output/github-actions/$BASENAME/step$($step_number)_$($enabled_steps[-1])_validation.txt"
+          $OUTPUT_FILE = "${{ steps.prepare-env.outputs.output_dir }}/$BASENAME/step$($step_number)_$($enabled_steps[-1])_validation.txt"
         } else {
           # No validation steps enabled, use initial translation
-          $OUTPUT_FILE = "output/github-actions/$BASENAME/step1_initial_translation.txt"
+          $OUTPUT_FILE = "${{ steps.prepare-env.outputs.output_dir }}/$BASENAME/step1_initial_translation.txt"
         }
         
         # If the expected file doesn't exist, try to find any validation file
@@ -205,7 +162,7 @@ jobs:
           Write-Host "Expected output file not found: $OUTPUT_FILE"
           Write-Host "Looking for any available validation files..."
           
-          $validation_files = Get-ChildItem "output/github-actions/$BASENAME" -Filter "step*_validation.txt" | 
+          $validation_files = Get-ChildItem "${{ steps.prepare-env.outputs.output_dir }}/$BASENAME" -Filter "step*_validation.txt" | 
             Sort-Object { [int]($_.Name -replace 'step(\d+).*', '$1') } -Descending
           
           if ($validation_files.Count -gt 0) {
@@ -213,8 +170,8 @@ jobs:
             Write-Host "Using latest available validation file: $OUTPUT_FILE"
           } else {
             Write-Host "No validation files found in output directory"
-            if (Test-Path "output/github-actions") {
-              Get-ChildItem "output/github-actions" -Recurse | ForEach-Object { $_.FullName }
+            if (Test-Path "${{ steps.prepare-env.outputs.output_dir }}") {
+              Get-ChildItem "${{ steps.prepare-env.outputs.output_dir }}" -Recurse | ForEach-Object { $_.FullName }
             }
             exit 1
           }
@@ -233,10 +190,10 @@ jobs:
       with:
         name: translation-results-${{ github.run_id }}
         path: |
-          output/github-actions/
-          !output/github-actions/step*.txt
-          !output/github-actions/step*.md
-          !output/github-actions/step*.docx
+          ${{ steps.prepare-env.outputs.output_dir }}/
+          !${{ steps.prepare-env.outputs.output_dir }}/step*.txt
+          !${{ steps.prepare-env.outputs.output_dir }}/step*.md
+          !${{ steps.prepare-env.outputs.output_dir }}/step*.docx
         retention-days: 30
     
     - name: Upload intermediate results
@@ -245,9 +202,9 @@ jobs:
       with:
         name: intermediate-results-${{ github.run_id }}
         path: |
-          output/github-actions/**/step*.txt
-          output/github-actions/**/step*.md
-          output/github-actions/**/step*.docx
+          ${{ steps.prepare-env.outputs.output_dir }}/**/step*.txt
+          ${{ steps.prepare-env.outputs.output_dir }}/**/step*.md
+          ${{ steps.prepare-env.outputs.output_dir }}/**/step*.docx
         retention-days: 7
     
     - name: Create job summary
@@ -258,33 +215,25 @@ jobs:
         "" >> $env:GITHUB_STEP_SUMMARY
         
         if ("${{ steps.translate.outputs.success }}" -eq "true") {
-          "## Translation Successful" >> $env:GITHUB_STEP_SUMMARY
-          "" >> $env:GITHUB_STEP_SUMMARY
-          "| Parameter | Value |" >> $env:GITHUB_STEP_SUMMARY
-          "|-----------|-------|" >> $env:GITHUB_STEP_SUMMARY
-          "| Input Document | `${{ github.event.inputs.local_file_path }}` |" >> $env:GITHUB_STEP_SUMMARY
-          "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $env:GITHUB_STEP_SUMMARY
-          "| Target Language | ${{ github.event.inputs.target_language }} |" >> $env:GITHUB_STEP_SUMMARY
-          "| Disabled Steps | ${{ github.event.inputs.disable_steps || 'None' }} |" >> $env:GITHUB_STEP_SUMMARY
-          
-          if ("${{ steps.output-info.outputs.output_file }}" -ne "") {
-            "| Output File | `${{ steps.output-info.outputs.output_file }}` |" >> $env:GITHUB_STEP_SUMMARY
-            "| File Size | ${{ steps.output-info.outputs.file_size }} bytes |" >> $env:GITHUB_STEP_SUMMARY
-          }
-          
-          "" >> $env:GITHUB_STEP_SUMMARY
-          "Download Results: Check the 'Artifacts' section above to download the translated document and intermediate results." >> $env:GITHUB_STEP_SUMMARY
+          "## ✅ Translation Successful" >> $env:GITHUB_STEP_SUMMARY
         } else {
-          "## Translation Failed" >> $env:GITHUB_STEP_SUMMARY
-          "" >> $env:GITHUB_STEP_SUMMARY
+          "## ❌ Translation Failed" >> $env:GITHUB_STEP_SUMMARY
           "The translation pipeline encountered an error. Please check the job logs for details." >> $env:GITHUB_STEP_SUMMARY
           "" >> $env:GITHUB_STEP_SUMMARY
-          "| Parameter | Value |" >> $env:GITHUB_STEP_SUMMARY
-          "|-----------|-------|" >> $env:GITHUB_STEP_SUMMARY
-          "| Input Document | `${{ github.event.inputs.local_file_path }}` |" >> $env:GITHUB_STEP_SUMMARY
-          "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $env:GITHUB_STEP_SUMMARY
-          "| Target Language | ${{ github.event.inputs.target_language }} |" >> $env:GITHUB_STEP_SUMMARY
-          "| Disabled Steps | ${{ github.event.inputs.disable_steps || 'None' }} |" >> $env:GITHUB_STEP_SUMMARY
+        }
+        
+        "| Parameter | Value |" >> $env:GITHUB_STEP_SUMMARY
+        "|-----------|-------|" >> $env:GITHUB_STEP_SUMMARY
+        "| Input Document | `${{ github.event.inputs.local_file_path }}` |" >> $env:GITHUB_STEP_SUMMARY
+        "| Translation Style | ${{ github.event.inputs.translation_style }} |" >> $env:GITHUB_STEP_SUMMARY
+        "| Target Language | ${{ github.event.inputs.target_language }} |" >> $env:GITHUB_STEP_SUMMARY
+        "| Disabled Steps | ${{ github.event.inputs.disable_steps || 'None' }} |" >> $env:GITHUB_STEP_SUMMARY
+        
+        if ("${{ steps.translate.outputs.success }}" -eq "true" -and "${{ steps.output-info.outputs.output_file }}" -ne "") {
+          "| Output File | `${{ steps.output-info.outputs.output_file }}` |" >> $env:GITHUB_STEP_SUMMARY
+          "| File Size | ${{ steps.output-info.outputs.file_size }} bytes |" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "Download Results: Check the 'Artifacts' section above to download the translated document and intermediate results." >> $env:GITHUB_STEP_SUMMARY
         }
 
   push-artifacts:
