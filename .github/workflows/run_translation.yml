@@ -329,8 +329,8 @@ jobs:
 
     - name: Configure Git
       run: |
-        git config --global user.name "${{ github.actor }}"
-        git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
     - name: Commit and push translation results
       if: steps.check_changes.outputs.changes_detected == 'true'
@@ -341,39 +341,7 @@ jobs:
         $BRANCH = git -c safe.directory="$PWD" rev-parse --abbrev-ref HEAD
         $INPUT_FILE = "${{ github.event.inputs.local_file_path }}"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
-        
         git -c safe.directory="$PWD" add output/
         git -c safe.directory="$PWD" commit -m "[Auto-commit] Translation results: $BASENAME [skip ci]"
-        
-        $RETRIES = 10
-        $SUCCESS = 0
-          for ($i = 1; $i -le $RETRIES; $i++) {
-            try {
-              # Force push since we know our changes are the only ones that matter
-              $token = $env:PAT_TOKEN
-              Write-Host "Token length: $($token.Length)"
-              Write-Host "Token starts with: $($token.Substring(0, [Math]::Min(10, $token.Length)))"
-              Write-Host "GITHUB_REPOSITORY: $($env:GITHUB_REPOSITORY)"
-              $pushResult = git -c safe.directory="$PWD" push "https://x-access-token:$($env:PAT_TOKEN)@github.com/${{ github.repository }}" "HEAD:$BRANCH" --force-with-lease
-              if ($LASTEXITCODE -eq 0) {
-                Write-Host "Successfully pushed translation results!"
-                $SUCCESS = 1
-                break
-              } else {
-                Write-Host "Push failed, retrying ($i/$RETRIES)..."
-                Write-Host "Attempting to fetch and reset to remote branch..."
-                git -c safe.directory="$PWD" fetch origin "$BRANCH"
-                git -c safe.directory="$PWD" reset --hard "origin/$BRANCH"
-                Start-Sleep -Seconds 3
-              }
-            } catch {
-              Write-Host "Push failed with error: $_"
-              Write-Host "Retrying ($i/$RETRIES)..."
-              Start-Sleep -Seconds 3
-            }
-          }
-        
-        if ($SUCCESS -ne 1) {
-          Write-Host "ERROR: Failed to push after $RETRIES attempts."
-          exit 1
-        }
+        git -c safe.directory="$PWD" pull --rebase
+        git -c safe.directory="$PWD" push "https://x-access-token:$($env:PAT_TOKEN)@github.com/${{ github.repository }}" "HEAD:$BRANCH"
