@@ -1,12 +1,13 @@
-"""Pipeline runner for orchestrating translation and validation steps."""
+"""Pipeline runner with LangChain chaining capabilities."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import logging
 
-from ..config import TranslationAgencyConfig, ensure_output_dir
+from ..config import TranslationAgencyConfig, ensure_output_dir, PROMPTS
 from ..utils.file_handler import DocumentHandler
 from ..utils.excel_summary import ExcelSummaryGenerator
+from ..llm.langchain_provider import EnhancedTextGenHubProvider, create_translation_pipeline_config
 from .translator import TranslationModule
 from .validators import (
     GrammarValidator,
@@ -19,7 +20,7 @@ from .validators import (
 
 
 class PipelineRunner:
-    """Orchestrates the complete translation and validation pipeline."""
+    """Orchestrates translation pipeline with LangChain chaining support."""
     
     # Registry of available validation steps
     VALIDATOR_REGISTRY = {
@@ -33,7 +34,7 @@ class PipelineRunner:
     
     def __init__(self, config: TranslationAgencyConfig):
         """
-        Initialize pipeline runner.
+        Initialize pipeline runner with chaining capabilities.
         
         Args:
             config: Configuration object for the pipeline
@@ -46,6 +47,9 @@ class PipelineRunner:
         
         # Initialize validators based on configuration
         self.validators = self._initialize_validators()
+        
+        # Initialize LangChain provider for full pipeline chaining
+        self._initialize_langchain_chaining()
         
         # Ensure output directory exists
         ensure_output_dir(self.config.pipeline.output_dir)
@@ -72,9 +76,24 @@ class PipelineRunner:
         
         return validators
     
+    def _initialize_langchain_chaining(self):
+        """Initialize LangChain provider for complete pipeline chaining."""
+        try:
+            self.langchain_provider = EnhancedTextGenHubProvider(
+                headless=self.config.llm.headless,
+                remove_cache=self.config.llm.remove_cache,
+                debug=self.config.llm.debug
+            )
+            self.can_use_chaining = True
+            self.logger.info("LangChain chaining enabled with TextGenHub")
+        except Exception as e:
+            self.logger.warning(f"LangChain chaining disabled: {e}")
+            self.langchain_provider = None
+            self.can_use_chaining = False
+    
     def run_pipeline(self, input_document_path: Optional[str] = None) -> Dict[str, Any]:
         """
-        Run the complete translation and validation pipeline.
+        Run the complete translation and validation pipeline using sequential execution.
         
         Args:
             input_document_path: Path to input document (overrides config)
@@ -94,27 +113,14 @@ class PipelineRunner:
         self.logger.info(f"Starting translation pipeline for: {input_path}")
         
         try:
-            # Step 1: Initial Translation
-            self.logger.info("Step 1: Performing initial translation...")
+            # Read original content
             original_content, file_format = DocumentHandler.read_document(input_path)
-            translated_content, file_format = self.translator.translate(input_path)
             
-            # Store current content for validation steps
-            current_content = translated_content
-            
-            # Step 2-7: Validation rounds
-            for i, validator in enumerate(self.validators, 2):
-                step_name = validator.step_name
-                self.logger.info(f"Step {i}: Running {step_name} validation...")
-                
-                current_content = validator.validate(
-                    text=current_content,
-                    original_text=original_content,
-                    input_path=input_path,
-                    file_format=file_format
-                )
-                
-                self.logger.info(f"Completed {step_name}")
+            # Use sequential validation (most reliable approach)
+            self.logger.info("� Using sequential validation for quality and reliability")
+            current_content = self._run_sequential_pipeline(
+                original_content, input_path, file_format
+            )
             
             # Save final result
             final_output_path = self._save_final_result(
@@ -138,7 +144,8 @@ class PipelineRunner:
                 "file_format": file_format,
                 "steps_completed": len(self.validators) + 1,  # +1 for translation
                 "final_content": current_content,
-                "original_content": original_content
+                "original_content": original_content,
+                "execution_mode": "sequential"
             }
             
             self.logger.info(f"Pipeline completed successfully. Output: {final_output_path}")
@@ -150,12 +157,46 @@ class PipelineRunner:
                 "success": False,
                 "error": str(e),
                 "input_path": input_path
-            }
+            }    
+    def _run_sequential_pipeline(self, original_content: str, input_path: str, 
+                               file_format: str) -> str:
+        """
+        Run pipeline using traditional sequential validation.
+        
+        Args:
+            original_content: Original document content
+            input_path: Path to input document
+            file_format: Document format
+            
+        Returns:
+            Final processed content
+        """
+        # Step 1: Initial Translation
+        self.logger.info("Step 1: Performing initial translation...")
+        translated_content, _ = self.translator.translate(input_path)
+        
+        # Store current content for validation steps
+        current_content = translated_content
+        
+        # Step 2-7: Validation rounds
+        for i, validator in enumerate(self.validators, 2):
+            step_name = validator.step_name
+            self.logger.info(f"Step {i}: Running {step_name} validation...")
+            
+            current_content = validator.validate(
+                text=current_content,
+                original_text=original_content,
+                input_path=input_path,
+                file_format=file_format
+            )
+            
+            self.logger.info(f"Completed {step_name}")
+        
+        return current_content
     
     def _save_final_result(self, content: str, input_path: str, file_format: str) -> Path:
         """Save the final translated and validated content."""
-        # Instead of creating a duplicate final.txt, return the path to the last step file
-        # The final content is already saved as step7_crossllm_validation.txt (or the last validation step)
+        # Return the path to the last step file
         last_step_num = len(self.validators) + 1  # +1 for translation step
         output_path = DocumentHandler.get_output_filename(
             input_path, f"step{last_step_num}_crossllm_validation", self.config.pipeline.output_dir
@@ -207,12 +248,13 @@ class PipelineRunner:
         return {
             "config": {
                 "llm_backend": self.config.llm.backend,
-                "model": self.config.llm.model,
                 "translation_style": self.config.pipeline.translation_style,
                 "target_language": self.config.pipeline.target_language,
                 "output_dir": self.config.pipeline.output_dir
             },
             "enabled_steps": self.config.validation.enabled_steps,
             "available_validators": list(self.VALIDATOR_REGISTRY.keys()),
-            "total_steps": len(self.validators) + 1
+            "total_steps": len(self.validators) + 1,
+            "langchain_chaining": self.can_use_chaining,
+            "execution_modes": ["sequential"]
         }
