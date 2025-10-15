@@ -127,9 +127,14 @@ jobs:
 
         # Add disabled steps if specified
         if ("${{ github.event.inputs.disable_steps }}" -ne "") {
-          $STEPS = "${{ github.event.inputs.disable_steps }}" -split ","
+          $DISABLED_STEPS = "${{ github.event.inputs.disable_steps }}"
+          Write-Host "Raw disable_steps input: '$DISABLED_STEPS'"
+          $STEPS = $DISABLED_STEPS -split ","
+          Write-Host "Parsed steps: $($STEPS -join ', ')"
           foreach ($step in $STEPS) {
-            $CMD = "$CMD --disable-steps '$step'"
+            $trimmed_step = $step.Trim()
+            Write-Host "Adding --disable-steps '$trimmed_step'"
+            $CMD = "$CMD --disable-steps '$trimmed_step'"
           }
         }
 
@@ -318,6 +323,11 @@ jobs:
           git -c safe.directory="$PWD" add output/
           git -c safe.directory="$PWD" status
         }
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "${{ github.actor }}"
+        git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
     - name: Commit and push translation results
       if: steps.check_changes.outputs.changes_detected == 'true'

@@ -101,11 +101,14 @@ def main():
     
     # Disable specified validation steps
     if args.disable_steps:
+        print(f"[DEBUG] Original enabled_steps: {config.validation.enabled_steps}")
+        print(f"[DEBUG] Disabling steps: {args.disable_steps}")
         enabled_steps = [
             step for step in config.validation.enabled_steps 
             if step not in args.disable_steps
         ]
         config.validation.enabled_steps = enabled_steps
+        print(f"[DEBUG] Final enabled_steps: {config.validation.enabled_steps}")
     
     # Initialize pipeline runner
     pipeline = PipelineRunner(config)
