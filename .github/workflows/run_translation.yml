@@ -187,15 +187,22 @@ jobs:
         
         # Determine the final validation step based on disabled steps
         $all_steps = @("grammar", "style", "accuracy", "hallucination", "consistency", "crossllm")
-        $enabled_steps = $all_steps | Where-Object { $DISABLED_STEPS -notlike "*$_*" }
+        $disabled_array = $DISABLED_STEPS -split "," | ForEach-Object { $_.Trim() }
+        $enabled_steps = $all_steps | Where-Object { $_ -notin $disabled_array }
+        
+        Write-Host "All steps: $($all_steps -join ', ')"
+        Write-Host "Disabled steps: $($disabled_array -join ', ')"
+        Write-Host "Enabled steps: $($enabled_steps -join ', ')"
         
         # Find the highest step number that should exist
         $step_number = 1  # initial translation is step 1
-        foreach ($step in $enabled_steps) {
-          $step_number++
+        if ($enabled_steps.Count -gt 0) {
+          $step_number += $enabled_steps.Count
+          $OUTPUT_FILE = "output/github-actions/$BASENAME/step$($step_number)_$($enabled_steps[-1])_validation.txt"
+        } else {
+          # No validation steps enabled, use initial translation
+          $OUTPUT_FILE = "output/github-actions/$BASENAME/step1_initial_translation.txt"
         }
-        
-        $OUTPUT_FILE = "output/github-actions/$BASENAME/step$($step_number)_$($enabled_steps[-1])_validation.txt"
         
         # If the expected file doesn't exist, try to find any validation file
         if (-not (Test-Path $OUTPUT_FILE)) {
