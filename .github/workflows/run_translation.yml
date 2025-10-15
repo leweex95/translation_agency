@@ -271,6 +271,7 @@ jobs:
       id: check_changes
       shell: powershell
       run: |
+        $ErrorActionPreference = "Continue"
         Write-Host "Checking for changes in output directory..."
         git -c safe.directory="$PWD" diff --quiet -- "output/"
         if ($LASTEXITCODE -ne 0) {
