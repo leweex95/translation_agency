@@ -358,7 +358,7 @@ jobs:
             Write-Host "Token length: $($token.Length)"
             Write-Host "Token starts with: $($token.Substring(0, [Math]::Min(10, $token.Length)))"
             Write-Host "GITHUB_REPOSITORY: $($env:GITHUB_REPOSITORY)"
-            $pushResult = git -c safe.directory="$PWD" push "https://x-access-token:$($env:PAT_TOKEN)@github.com/${{ github.repository }} HEAD:$BRANCH" --force-with-lease
+            $pushResult = git -c safe.directory="$PWD" push "https://x-access-token:$($env:PAT_TOKEN)@github.com/${{ github.repository }}" "HEAD:$BRANCH" --force-with-lease
             if ($LASTEXITCODE -eq 0) {
               Write-Host "Successfully pushed translation results!"
               $SUCCESS = 1
