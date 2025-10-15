@@ -1,0 +1,9 @@
+Értékelés 7.0
+Teszt I: A szövegek általános fordításában való jártasságod meghatározása.
+Teszt II: A kódok/címkék tartalmazó szövegek fordításában való jártasságod meghatározása. Értelmezd a kontextust, mielőtt lefordítanád. Ne távolítsd el a kódokat a végső kimenetből.
+Teszt I - A folyamat egyszerű: másold ki az egyedi ajánló linkedet, és oszd meg barátaiddal e-mailben, szöveges üzenetben vagy bármilyen más preferált módon.
+Mondd el, mire van szükséged, és percek alatt ajánlatokat kapsz helyi szabadúszóktól. Ne felejtsd el, hogy a posztolás ingyenes!
+Természetesen! Bármikor frissítheted tagsági csomagodat, hogy azonnali további előnyökhöz juss. Alternatívaként vissza is térhetsz az alacsonyabb tagságra, és továbbra is élvezheted a jelenlegi tagság előnyeit annak lejáratáig, mielőtt áttérnél az alacsonyabb tagsági csomagra.
+Teszt II - Nézd meg <x equiv-text="{{ username }}" id="INTERPOLATION"/>'s teljes profilját.
+<strong>Ingyenes</strong> projektet posztolni - mondd el szabadúszóinknak, hogy milyen munkát szeretnél, és percek alatt ajánlatokat kapsz!
+Ahhoz, hogy megváltoztathasd az országodat, kérjük, hogy <x equiv-text="&lt;fl-link flTrackingLabel=&quot;ProfileSettingsCountryVerifyIdentityLink&quot; link=&quot;/users/kyc/verification-center-home&quot; &gt;" id="START_TAG_FL_LINK" ctype="x-fl_link"/> igazold a személyazonosságodat <x equiv-text="&lt;/fl-link&gt;" id="CLOSE_TAG_FL_LINK" ctype="x-fl_link"/>. Ezt azért kérjük, hogy ellenőrizhessük a lakcímadatokat.
