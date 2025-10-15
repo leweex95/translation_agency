@@ -1,17 +1,23 @@
-Értékelés 7.0 Teszt I: A cél az Ön általános szövegfordítási kompetenciájának meghatározása Teszt II: A cél az Ön kódokat/címkéket tartalmazó szövegek fordítási kompetenciájának meghatározása. Mielőtt lefordítaná, értse meg a szövegkörnyezetet. Ne távolítsa el a kódokat a végső eredményből.
-Teszt I - A folyamat egyszerű: csak másolja le az egyedi hivatkozási linkjét, és ossza meg barátaival e-mailben, szöveges üzenetben vagy bármilyen más preferált módon.
+Értékelés 7.0 Teszt I: Az Ön általános fordítási kompetenciájának meghatározása Teszt II: Az Ön kompetenciájának meghatározása kódok/címkék tartalmazó szövegek fordításában. A fordítás előtt mindig értse meg a kontextust. Ne távolítsa el a kódokat a végső kimenetből.
+Teszt I
 
 
-Mondja el, mit kell elvégezni, és perceken belül ajánlatokat kap helyi szabadúszóktól. Ne feledje, hogy a projekt közzététele ingyenes!
+A folyamat egyszerű: egyszerűen másolja le az egyedi ajánló linkjét, és ossza meg barátaival e-mailben, szöveges üzenetben vagy bármilyen más preferált módszerrel.
 
 
-Természetesen! Bármikor frissítheti tagságát, hogy azonnal extra előnyökhöz jusson. Alternatívaként csökkentheti tagságát, és továbbra is élvezheti a jelenlegi tagságának előnyeit annak lejáratáig, mielőtt átváltana egy alacsonyabb tagsági csomagra.
+Mondja el nekünk, mire van szüksége, és perceken belül ajánlatokat kap a helyi szabadúszóktól. Ne feledje, a projekt közzététele ingyenes!
 
 
-Teszt II - Nézze meg <x equiv-text="{{ username }}" id="INTERPOLATION"/>'s teljes profilját
+Természetesen! Frissítse bármikor tagsági csomagját, hogy azonnal további előnyökhöz jusson. Alternatívaként csökkentheti tagságát, és továbbra is élvezheti a jelenlegi tagsága előnyeit a lejárat előtt, mielőtt áttérne az alacsonyabb tagsági csomagra.
 
 
-<strong>Ingyenes</strong> projektet közzétenni – mondja el szabadúszóinknak, hogy milyen munkát kell elvégezni, és perceken belül javaslatokat kap!
+Teszt II
 
 
-A lakóhelyének megváltoztatásához kérjük, hogy <x equiv-text="&lt;fl-link flTrackingLabel=&quot;ProfileSettingsCountryVerifyIdentityLink&quot; link=&quot;/users/kyc/verification-center-home&quot; &gt;" id="START_TAG_FL_LINK" ctype="x-fl_link"/> igazolja személyazonosságát <x equiv-text="&lt;/fl-link&gt;" id="CLOSE_TAG_FL_LINK" ctype="x-fl_link"/>. Ezt annak érdekében kérjük, hogy ellenőrizhessük a címadatait.
+Tekintse meg <x equiv-text="{{ username }}" id="INTERPOLATION"/>'s teljes profilját
+
+
+<strong>Ingyenes</strong> projektet közzétenni – mondja el szabadúszóinknak, milyen munkát szeretne, és perceken belül ajánlatokat kap!
+
+
+Az országának módosításához szükséges, hogy <x equiv-text="&lt;fl-link flTrackingLabel=&quot;ProfileSettingsCountryVerifyIdentityLink&quot; link=&quot;/users/kyc/verification-center-home&quot; &gt;" id="START_TAG_FL_LINK" ctype="x-fl_link"/> igazolja személyazonosságát <x equiv-text="&lt;/fl-link&gt;" id="CLOSE_TAG_FL_LINK" ctype="x-fl_link"/>. Ez azért szükséges, hogy ellenőrizhessük címtartozásait.
