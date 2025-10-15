@@ -273,16 +273,26 @@ jobs:
       run: |
         Write-Host "Checking for changes in output directory..."
         # Use -c to temporarily set safe.directory for this command only
-        $hasChanges = git -c safe.directory="$PWD" diff --quiet -- "output/"
+        $hasChanges = $false
+        git -c safe.directory="$PWD" diff --quiet -- "output/"
         if ($LASTEXITCODE -eq 0) {
-          echo "changes_detected=false" >> $env:GITHUB_OUTPUT
-          Write-Host "No new translation outputs to commit"
+          # No tracked changes, check for untracked files
+          $untracked = git -c safe.directory="$PWD" ls-files --others --exclude-standard -- "output/"
+          if ($untracked) {
+            $hasChanges = $true
+            Write-Host "New untracked files detected in output/"
+          } else {
+            Write-Host "No new translation outputs to commit"
+          }
         } else {
-          echo "changes_detected=true" >> $env:GITHUB_OUTPUT
-          Write-Host "New translation outputs detected"
-          git -c safe.directory="$PWD" add output/
-          git -c safe.directory="$PWD" status
+          $hasChanges = $true
+          Write-Host "Modified files detected in output/"
         }
+        
+        if ($hasChanges) {
+          echo "changes_detected=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "changes_detected=false" >> $env:GITHUB_OUTPUT
 
     - name: Configure Git
       run: |
@@ -300,4 +310,4 @@ jobs:
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
         git -c safe.directory="$PWD" add output/
         git -c safe.directory="$PWD" commit -m "[Auto-commit] Translation results: $BASENAME [skip ci]"
-        git -c safe.directory="$PWD" push
+        git -c safe.directory="$PWD" push "https://x-access-token:$env:PAT_TOKEN@github.com/${{ github.repository }}"
