@@ -1,9 +1,0 @@
-Corrected Translation:
-Értékelés 7.0
-Teszt I: Az Ön képességeinek értékelése általános szövegek fordításában.
-Teszt II: Az Ön képességeinek értékelése kódokat és címkéket tartalmazó szövegek fordításában.
-Fontos, hogy mindig értse meg a szöveg kontextusát a fordítás előtt. Ne távolítsa el a kódokat a végső szövegből.
-Teszt I
-A folyamat egyszerű: másolja le az egyedi ajánló linkjét, és ossza meg barátaival e-mailben, üzenetben vagy bármely más preferált módon. Mondja el, mire van szüksége, és perceken belül ajánlatokat kap a helyi szabadúszóktól. Ne feledje, a közzététel ingyenes! Bármikor frissítheti a tagsági tervét, hogy azonnali hozzáférést kapjon további előnyökhöz. Alternatív megoldásként csökkentheti tagságát, és továbbra is élvezheti a jelenlegi tagsági előnyöket, amíg azok érvényben vannak, mielőtt áttérne az alacsonyabb szintű tagsági tervre.
-Teszt II
-Tekintse meg <x equiv-text="{{ username }}" id="INTERPOLATION"/>'s teljes profilját. <strong>Ingyenes</strong> projekt közzététele – mondja el szabadúszóinknak, milyen munkát szeretne, és perceken belül ajánlatokat kap! Az országának módosításához kérjük, hogy <x equiv-text="&lt;fl-link flTrackingLabel=&quot;ProfileSettingsCountryVerifyIdentityLink&quot; link=&quot;/users/kyc/verification-center-home&quot; &gt;" id="START_TAG_FL_LINK" ctype="x-fl_link"/> ellenőrizze személyazonosságát <x equiv-text="&lt;/fl-link&gt;" id="CLOSE_TAG_FL_LINK" ctype="x-fl_link"/>. Ez szükséges ahhoz, hogy ellenőrizhessük lakcímét.
