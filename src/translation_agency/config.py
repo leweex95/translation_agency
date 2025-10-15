@@ -68,13 +68,15 @@ class TranslationAgencyConfig:
 
 def load_prompt(prompt_name: str) -> str:
     """Load a prompt from the prompts directory."""
-    prompt_path = Path(__file__).parent.parent.parent / "prompts" / f"{prompt_name}.py"
+    import importlib
     try:
-        return prompt_path.read_text(encoding='utf-8').strip()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-    except UnicodeDecodeError:
-        raise ValueError(f"Prompt file {prompt_path} is not valid UTF-8")
+        module = importlib.import_module(f"prompts.{prompt_name}")
+        var_name = f"{prompt_name.upper()}_PROMPT"
+        return getattr(module, var_name)
+    except ImportError as e:
+        raise ImportError(f"Could not import prompt module: prompts.{prompt_name} - {e}")
+    except AttributeError as e:
+        raise AttributeError(f"Could not find prompt variable in prompts.{prompt_name} - {e}")
 
 
 # Predefined prompts for each validation step
