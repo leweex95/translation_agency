@@ -27,12 +27,14 @@ class TextGenHubLLM(LLM):
     @property
     def provider(self):
         """Lazy initialization of textgenhub provider."""
-        if self._provider is None:
-            self._provider = ChatGPT(
+        _provider = object.__getattribute__(self, '_provider')
+        if _provider is None:
+            _provider = ChatGPT(
                 headless=self.headless,
                 remove_cache=self.remove_cache
             )
-        return self._provider
+            object.__setattr__(self, '_provider', _provider)
+        return _provider
 
     @property
     def model_name(self) -> str:

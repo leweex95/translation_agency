@@ -61,13 +61,6 @@ def create_cli_parser() -> argparse.ArgumentParser:
     )
     
     parser.add_argument(
-        "--chaining",
-        type=lambda x: str(x).lower() in ['true', '1', 'yes', 'on'],
-        default=True,
-        help="Use LangChain chaining for optimized execution (default: true)"
-    )
-    
-    parser.add_argument(
         "--disable-steps",
         nargs="*",
         choices=["grammar", "style", "accuracy", "hallucination", "consistency", "crossllm"],
@@ -131,7 +124,7 @@ def main():
     
     # Run the pipeline
     print(f"Starting translation pipeline for: {args.input_document}")
-    results = pipeline.run_pipeline(use_chaining=args.chaining)
+    results = pipeline.run_pipeline()
     
     if results["success"]:
         print(f"[SUCCESS] Translation completed successfully!")
@@ -157,8 +150,7 @@ def run_pipeline_programmatic(
     llm_backend: str = "chatgpt",
     headless: bool = True,
     debug: bool = False,
-    disabled_steps: Optional[list] = None,
-    use_chaining: bool = True
+    disabled_steps: Optional[list] = None
 ) -> dict:
     """
     Run pipeline programmatically without CLI.
@@ -197,9 +189,8 @@ def run_pipeline_programmatic(
         ]
         config.validation.enabled_steps = enabled_steps
     
-    # Run pipeline
     pipeline = PipelineRunner(config)
-    return pipeline.run_pipeline(use_chaining=use_chaining)
+    return pipeline.run_pipeline()
 
 
 if __name__ == "__main__":

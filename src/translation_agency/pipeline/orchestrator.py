@@ -196,11 +196,19 @@ class PipelineRunner:
     
     def _save_final_result(self, content: str, input_path: str, file_format: str) -> Path:
         """Save the final translated and validated content."""
-        # Return the path to the last step file
-        last_step_num = len(self.validators) + 1  # +1 for translation step
-        output_path = DocumentHandler.get_output_filename(
-            input_path, f"step{last_step_num}_crossllm_validation", self.config.pipeline.output_dir
-        )
+        # Determine the last step based on enabled validators
+        if self.validators:
+            last_validator = self.validators[-1]
+            last_step_name = last_validator.step_name
+            step_number = len(self.validators) + 1  # +1 for translation step
+            output_path = DocumentHandler.get_output_filename(
+                input_path, last_step_name, self.config.pipeline.output_dir
+            )
+        else:
+            # No validators enabled, final result is the initial translation
+            output_path = DocumentHandler.get_output_filename(
+                input_path, "step1_initial_translation", self.config.pipeline.output_dir
+            )
         
         # For PDF inputs, the actual file has .txt extension
         if file_format == '.pdf':
