@@ -67,8 +67,6 @@ def create_cli_parser() -> argparse.ArgumentParser:
         help="Validation steps to disable"
     )
     
-
-    
     parser.add_argument(
         "--status",
         action="store_true",
