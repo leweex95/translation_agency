@@ -272,27 +272,20 @@ jobs:
       shell: powershell
       run: |
         Write-Host "Checking for changes in output directory..."
-        # Use -c to temporarily set safe.directory for this command only
-        $hasChanges = $false
         git -c safe.directory="$PWD" diff --quiet -- "output/"
-        if ($LASTEXITCODE -eq 0) {
-          # No tracked changes, check for untracked files
+        if ($LASTEXITCODE -ne 0) {
+          echo "changes_detected=true" >> $env:GITHUB_OUTPUT
+          Write-Host "Modified files detected in output/"
+        } else {
           $untracked = git -c safe.directory="$PWD" ls-files --others --exclude-standard -- "output/"
           if ($untracked) {
-            $hasChanges = $true
+            echo "changes_detected=true" >> $env:GITHUB_OUTPUT
             Write-Host "New untracked files detected in output/"
           } else {
+            echo "changes_detected=false" >> $env:GITHUB_OUTPUT
             Write-Host "No new translation outputs to commit"
           }
-        } else {
-          $hasChanges = $true
-          Write-Host "Modified files detected in output/"
         }
-        
-        if ($hasChanges) {
-          echo "changes_detected=true" >> $env:GITHUB_OUTPUT
-        } else {
-          echo "changes_detected=false" >> $env:GITHUB_OUTPUT
 
     - name: Configure Git
       run: |
