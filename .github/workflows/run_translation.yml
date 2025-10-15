@@ -83,6 +83,10 @@ jobs:
         Write-Host "DEBUG: INPUT_FILE = $INPUT_FILE"
         $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
         $TIMESTAMP = [DateTime]::Now.ToString("yyyyMMdd_HHmmss")
+        if (-not $TIMESTAMP) {
+          Write-Error "Failed to generate timestamp"
+          exit 1
+        }
         $OUTPUT_DIR = "output/" + $TIMESTAMP + "_" + $BASENAME
         Write-Host "DEBUG: TIMESTAMP = $TIMESTAMP"
         Write-Host "DEBUG: BASENAME = $BASENAME"
