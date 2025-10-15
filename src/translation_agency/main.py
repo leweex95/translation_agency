@@ -189,7 +189,6 @@ def run_pipeline_programmatic(
         ]
         config.validation.enabled_steps = enabled_steps
     
-    # Run pipeline
     pipeline = PipelineRunner(config)
     return pipeline.run_pipeline()
 

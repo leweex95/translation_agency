@@ -271,21 +271,35 @@ jobs:
       id: check_changes
       shell: powershell
       run: |
+        # Set error handling to continue on command failures
+        $ErrorActionPreference = "Continue"
+        $global:LASTEXITCODE = 0
+        
         Write-Host "Checking for changes in output directory..."
-        git -c safe.directory="$PWD" diff --quiet -- "output/"
-        if ($LASTEXITCODE -ne 0) {
+        
+        # Check for modified files - git diff returns 1 if changes exist, 0 if no changes
+        git -c safe.directory="$PWD" diff --quiet -- "output/" 2>$null
+        $diffExitCode = $LASTEXITCODE
+        
+        if ($diffExitCode -ne 0) {
           echo "changes_detected=true" >> $env:GITHUB_OUTPUT
           Write-Host "Modified files detected in output/"
         } else {
-          $untracked = git -c safe.directory="$PWD" ls-files --others --exclude-standard -- "output/"
-          if ($untracked) {
+          # Check for untracked files
+          $untracked = git -c safe.directory="$PWD" ls-files --others --exclude-standard -- "output/" 2>$null
+          if ($untracked -and $untracked.Length -gt 0) {
             echo "changes_detected=true" >> $env:GITHUB_OUTPUT
             Write-Host "New untracked files detected in output/"
+            Write-Host "Untracked files: $($untracked -join ', ')"
           } else {
             echo "changes_detected=false" >> $env:GITHUB_OUTPUT
             Write-Host "No new translation outputs to commit"
           }
         }
+        
+        # Reset exit code to ensure step succeeds
+        $global:LASTEXITCODE = 0
+        exit 0
 
     - name: Configure Git
       run: |
@@ -298,9 +312,29 @@ jobs:
       env:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
-        $BRANCH = git -c safe.directory="$PWD" rev-parse --abbrev-ref HEAD
-        $INPUT_FILE = "${{ github.event.inputs.local_file_path }}"
-        $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
-        git -c safe.directory="$PWD" add output/
-        git -c safe.directory="$PWD" commit -m "[Auto-commit] Translation results: $BASENAME [skip ci]"
-        git -c safe.directory="$PWD" push "https://x-access-token:$env:PAT_TOKEN@github.com/${{ github.repository }}"
+        # Set error handling to stop on real errors but continue on expected git failures
+        $ErrorActionPreference = "Stop"
+        
+        try {
+          $BRANCH = git -c safe.directory="$PWD" rev-parse --abbrev-ref HEAD
+          $INPUT_FILE = "${{ github.event.inputs.local_file_path }}"
+          $BASENAME = [System.IO.Path]::GetFileNameWithoutExtension($INPUT_FILE)
+          
+          Write-Host "Current branch: $BRANCH"
+          Write-Host "Adding output files to git..."
+          git -c safe.directory="$PWD" add output/
+          
+          Write-Host "Committing changes..."
+          git -c safe.directory="$PWD" commit -m "[Auto-commit] Translation results: $BASENAME [skip ci]"
+          
+          Write-Host "Pushing to remote repository..."
+          git -c safe.directory="$PWD" push "https://x-access-token:$env:PAT_TOKEN@github.com/${{ github.repository }}" $BRANCH
+          
+          Write-Host "Successfully committed and pushed translation results"
+        }
+        catch {
+          Write-Host "Error during git operations: $($_.Exception.Message)"
+          Write-Host "Git status:"
+          git status
+          throw $_
+        }

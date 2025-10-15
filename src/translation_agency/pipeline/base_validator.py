@@ -1,28 +1,44 @@
-"""Base validation class for all validation steps."""
+"""Base validation class with LangChain integration support."""
 
 from abc import ABC, abstractmethod
 from textgenhub import ChatGPT, ask_chatgpt
 from ..config import TranslationAgencyConfig, get_prompt
 from ..utils.file_handler import DocumentHandler
+from ..llm.langchain_provider import EnhancedTextGenHubProvider
 from typing import Optional
 
 
 class BaseValidator(ABC):
-    """Base class for all validation steps."""
+    """Base class for all validation steps with LangChain integration."""
 
     def __init__(self, config: TranslationAgencyConfig):
         """
-        Initialize validator.
+        Initialize validator with dual provider support.
 
         Args:
             config: Configuration object containing LLM and pipeline settings
         """
         self.config = config
-        self.llm_provider = self._initialize_llm()
         self.step_name = self._get_step_name()
+        
+        # Initialize both providers for comparison/fallback
+        self.textgenhub_provider = self._initialize_textgenhub()
+        
+        try:
+            self.langchain_provider = EnhancedTextGenHubProvider(
+                headless=self.config.llm.headless,
+                remove_cache=self.config.llm.remove_cache,
+                debug=self.config.llm.debug,
+                fallback_provider=self.textgenhub_provider
+            )
+            self.use_langchain = True
+        except Exception as e:
+            print(f"[Warning] LangChain initialization failed: {e}")
+            self.langchain_provider = None
+            self.use_langchain = False
 
-    def _initialize_llm(self):
-        """Initialize the LLM provider based on configuration."""
+    def _initialize_textgenhub(self):
+        """Initialize the textgenhub provider (existing)."""
         backend = self.config.llm.backend
 
         if backend == "chatgpt":
@@ -46,7 +62,7 @@ class BaseValidator(ABC):
     def validate(self, text: str, original_text: Optional[str] = None,
                 input_path: Optional[str] = None, file_format: Optional[str] = None) -> str:
         """
-        Validate and improve the given text.
+        Validate and improve the given text using available provider.
 
         Args:
             text: Text to validate and improve
@@ -70,7 +86,7 @@ class BaseValidator(ABC):
         # Get and format prompt
         prompt = get_prompt(self._get_prompt_key(), **prompt_args)
 
-        # Perform validation
+        # Perform validation using preferred provider
         improved_text = self._call_llm(prompt)
 
         # Save intermediate result
@@ -83,11 +99,19 @@ class BaseValidator(ABC):
         return improved_text
 
     def _call_llm(self, prompt: str) -> str:
-        """Call the appropriate LLM backend."""
+        """Call the appropriate LLM backend with LangChain preference."""
+        # Try LangChain first if available
+        if self.use_langchain and self.langchain_provider:
+            try:
+                return self.langchain_provider.chat_with_fallback(prompt)
+            except Exception as e:
+                print(f"[Warning] LangChain failed for {self.step_name}: {e}")
+                # Fall through to textgenhub
+        
+        # Fallback to textgenhub
         backend = self.config.llm.backend
-
         if backend == "chatgpt":
-            return self.llm_provider.chat(prompt)
+            return self.textgenhub_provider.chat(prompt)
         else:
             raise ValueError(f"Unsupported backend: {backend}. Only ChatGPT is currently supported.")
 

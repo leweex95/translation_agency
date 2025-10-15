@@ -1,9 +1,8 @@
 Értékelés 7.0
-Teszt I: A szövegek általános fordításában való jártasságod meghatározása.
-Teszt II: A kódok/címkék tartalmazó szövegek fordításában való jártasságod meghatározása. Értelmezd a kontextust, mielőtt lefordítanád. Ne távolítsd el a kódokat a végső kimenetből.
-Teszt I - A folyamat egyszerű: másold ki az egyedi ajánló linkedet, és oszd meg barátaiddal e-mailben, szöveges üzenetben vagy bármilyen más preferált módon.
-Mondd el, mire van szükséged, és percek alatt ajánlatokat kapsz helyi szabadúszóktól. Ne felejtsd el, hogy a posztolás ingyenes!
-Természetesen! Bármikor frissítheted tagsági csomagodat, hogy azonnali további előnyökhöz juss. Alternatívaként vissza is térhetsz az alacsonyabb tagságra, és továbbra is élvezheted a jelenlegi tagság előnyeit annak lejáratáig, mielőtt áttérnél az alacsonyabb tagsági csomagra.
-Teszt II - Nézd meg <x equiv-text="{{ username }}" id="INTERPOLATION"/>'s teljes profilját.
-<strong>Ingyenes</strong> projektet posztolni - mondd el szabadúszóinknak, hogy milyen munkát szeretnél, és percek alatt ajánlatokat kapsz!
-Ahhoz, hogy megváltoztathasd az országodat, kérjük, hogy <x equiv-text="&lt;fl-link flTrackingLabel=&quot;ProfileSettingsCountryVerifyIdentityLink&quot; link=&quot;/users/kyc/verification-center-home&quot; &gt;" id="START_TAG_FL_LINK" ctype="x-fl_link"/> igazold a személyazonosságodat <x equiv-text="&lt;/fl-link&gt;" id="CLOSE_TAG_FL_LINK" ctype="x-fl_link"/>. Ezt azért kérjük, hogy ellenőrizhessük a lakcímadatokat.
+Teszt I: A cél az Ön általános szövegfordítási kompetenciájának meghatározása.
+Teszt II: A cél az Ön kódokat/címkéket tartalmazó szövegek fordítási kompetenciájának meghatározása. Mielőtt lefordítaná, értse meg a szövegkörnyezetet. Ne távolítsa el a kódokat a végső eredményből.
+Teszt I - A folyamat egyszerű: csak másolja le az egyedi hivatkozási linkjét, és ossza meg barátaival e-mailben, szöveges üzenetben vagy bármilyen más preferált módon. Mondja el, mit kell elvégezni, és perceken belül ajánlatokat kap helyi szabadúszóktól. Ne feledje, hogy a projekt közzététele ingyenes!
+Természetesen! Bármikor frissítheti tagságát, hogy azonnal extra előnyökhöz jusson. Alternatívaként csökkentheti tagságát, és továbbra is élvezheti a jelenlegi tagságának előnyeit annak lejáratáig, mielőtt átváltana egy alacsonyabb tagsági csomagra.
+Teszt II - Nézze meg <x equiv-text="{{ username }}" id="INTERPOLATION"/>'s teljes profilját.
+<strong>Ingyenes</strong> projektet közzétenni – mondja el szabadúszóinknak, hogy milyen munkát kell elvégezni, és perceken belül javaslatokat kap!
+A lakóhelyének megváltoztatásához kérjük, hogy <x equiv-text="&lt;fl-link flTrackingLabel=&quot;ProfileSettingsCountryVerifyIdentityLink&quot; link=&quot;/users/kyc/verification-center-home&quot; &gt;" id="START_TAG_FL_LINK" ctype="x-fl_link"/> igazolja személyazonosságát <x equiv-text="&lt;/fl-link&gt;" id="CLOSE_TAG_FL_LINK" ctype="x-fl_link"/>. Ezt annak érdekében kérjük, hogy ellenőrizhessük a címadatait.
