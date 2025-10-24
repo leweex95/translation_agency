@@ -194,7 +194,7 @@ jobs:
     
     - name: Upload translation results
       if: steps.translate.outputs.success == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: translation-results-${{ github.run_id }}
         path: |
@@ -206,7 +206,7 @@ jobs:
     
     - name: Upload intermediate results
       if: steps.translate.outputs.success == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: intermediate-results-${{ github.run_id }}
         path: |
