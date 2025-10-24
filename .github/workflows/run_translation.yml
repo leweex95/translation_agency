@@ -256,13 +256,13 @@ jobs:
         fetch-depth: 0
 
     - name: Download artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: translation-results-${{ github.run_id }}
         path: output/
 
     - name: Download intermediate artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: intermediate-results-${{ github.run_id }}
         path: output/
