@@ -1,2 +1,0 @@
-Corrected Translation:
-"Ez egy teszt dokumentum fordításhoz. Helló, világ! Ez egy egyszerű teszt, amelynek célja annak ellenőrzése, hogy a fordítási folyamat megfelelően működik-e. A dokumentum néhány alapvető szöveget tartalmaz, amelyeket angolról magyarra kell lefordítani."

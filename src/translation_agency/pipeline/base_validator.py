@@ -1,7 +1,7 @@
 """Base validation class with LangChain integration support."""
 
 from abc import ABC, abstractmethod
-from textgenhub import ChatGPT, ask_chatgpt
+from textgenhub.chatgpt import ask
 from ..config import TranslationAgencyConfig, get_prompt
 from ..utils.file_handler import DocumentHandler
 from ..llm.langchain_provider import EnhancedTextGenHubProvider
@@ -42,10 +42,19 @@ class BaseValidator(ABC):
         backend = self.config.llm.backend
 
         if backend == "chatgpt":
-            return ChatGPT(
-                headless=self.config.llm.headless,
-                remove_cache=self.config.llm.remove_cache
-            )
+            # Return a simple wrapper that calls ask function
+            class TextGenHubWrapper:
+                def __init__(self, config):
+                    self.config = config
+                
+                def chat(self, prompt):
+                    return ask(
+                        prompt,
+                        headless=self.config.llm.headless,
+                        remove_cache=self.config.llm.remove_cache
+                    )
+            
+            return TextGenHubWrapper(self.config)
         else:
             raise ValueError(f"Only ChatGPT backend is currently supported. Got: {backend}")
 
@@ -59,8 +68,9 @@ class BaseValidator(ABC):
         """Return the prompt key for this validation step."""
         pass
 
-    def validate(self, text: str, original_text: Optional[str] = None,
-                input_path: Optional[str] = None, file_format: Optional[str] = None) -> str:
+    def validate(self, text: str, original_text: Optional[str] = None, 
+                input_path: Optional[str] = None, file_format: Optional[str] = None,
+                pipeline_timestamp: Optional[str] = None) -> str:
         """
         Validate and improve the given text using available provider.
 
@@ -92,7 +102,7 @@ class BaseValidator(ABC):
         # Save intermediate result
         if input_path and file_format:
             output_path = DocumentHandler.get_output_filename(
-                input_path, self.step_name, self.config.pipeline.output_dir
+                input_path, self.step_name, self.config.pipeline.output_dir, pipeline_timestamp
             )
             DocumentHandler.write_document(improved_text, output_path, file_format)
 

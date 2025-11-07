@@ -1,6 +1,5 @@
 """Consolidated validation modules for the translation pipeline."""
 
-from textgenhub import ChatGPT, ask_chatgpt
 from .base_validator import BaseValidator
 
 
@@ -62,10 +61,21 @@ class CrossLLMValidator(BaseValidator):
         backend = self.config.validation.crossllm_backend
 
         if backend == "chatgpt":
-            return ChatGPT(
-                headless=self.config.llm.headless,
-                remove_cache=self.config.llm.remove_cache
-            )
+            # Use the same REAL textgenhub approach as other validators
+            from textgenhub.chatgpt import ask
+            
+            class TextGenHubWrapper:
+                def __init__(self, config):
+                    self.config = config
+                
+                def chat(self, prompt):
+                    return ask(
+                        prompt,
+                        headless=self.config.llm.headless,
+                        remove_cache=self.config.llm.remove_cache
+                    )
+            
+            return TextGenHubWrapper(self.config)
         else:
             raise ValueError(f"Only ChatGPT backend is currently supported for cross-validation. Got: {backend}")
 

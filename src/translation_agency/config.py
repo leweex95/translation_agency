@@ -11,7 +11,7 @@ class LLMConfig:
     """Configuration for LLM backends."""
     backend: str = "chatgpt"  # chatgpt, deepseek, perplexity
     headless: bool = True
-    remove_cache: bool = True
+    remove_cache: bool = False  # Changed to False: CRITICAL for session persistence
     debug: bool = False
 
 

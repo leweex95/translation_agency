@@ -3,38 +3,24 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
-from textgenhub import ChatGPT
+from textgenhub.chatgpt import ask
 from typing import Optional, Dict, Any, List
 import asyncio
 
 
 class TextGenHubLLM(LLM):
-    """LangChain-compatible wrapper for textgenhub.ChatGPT."""
+    """LangChain-compatible wrapper for textgenhub.chatgpt.ask()."""
 
     headless: bool = True
     remove_cache: bool = True
     debug: bool = False
 
     def __init__(self, headless: bool = True, remove_cache: bool = True, debug: bool = False):
-        """Initialize with textgenhub.ChatGPT configuration."""
+        """Initialize with textgenhub configuration."""
         super().__init__()
         self.headless = headless
         self.remove_cache = remove_cache
         self.debug = debug
-        # Use object.__setattr__ to bypass Pydantic validation for internal state
-        object.__setattr__(self, '_provider', None)
-
-    @property
-    def provider(self):
-        """Lazy initialization of textgenhub provider."""
-        _provider = object.__getattribute__(self, '_provider')
-        if _provider is None:
-            _provider = ChatGPT(
-                headless=self.headless,
-                remove_cache=self.remove_cache
-            )
-            object.__setattr__(self, '_provider', _provider)
-        return _provider
 
     @property
     def model_name(self) -> str:
@@ -43,9 +29,9 @@ class TextGenHubLLM(LLM):
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None,
               run_manager: Optional[CallbackManagerForLLMRun] = None) -> str:
-        """Execute LLM call through textgenhub.ChatGPT."""
+        """Execute LLM call through textgenhub.chatgpt.ask()."""
         try:
-            result = self.provider.chat(prompt)
+            result = ask(prompt, headless=self.headless, remove_cache=self.remove_cache)
 
             # Handle stop sequences if provided
             if stop:
